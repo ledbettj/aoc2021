@@ -21,7 +21,7 @@ fn input() -> Vec<&'static str> {
 
 fn bit_tallies(input: &[&str]) -> Vec<[usize; 2]> {
   let mut tallies : Vec<[usize; 2]> = vec![];
-  for i in 0..input[0].len() {
+  for _ in 0..input[0].len() {
     tallies.push([0, 0]);
   }
 
@@ -36,7 +36,7 @@ fn bit_tallies(input: &[&str]) -> Vec<[usize; 2]> {
 }
 
 fn calc_gamma_epsilon(input: &[&str]) -> (usize, usize) {
-  let mut tallies = bit_tallies(&input);
+  let tallies = bit_tallies(&input);
   let mut gamma = 0;
   let mut epsilon = 0;
 
