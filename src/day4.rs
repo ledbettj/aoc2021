@@ -5,7 +5,7 @@ use std::num::ParseIntError;
 const INPUT : &'static str = include_str!("../inputs/day4.txt");
 const SAMPLE : &'static str = include_str!("../inputs/day4.sample.txt");
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Board {
   numbers: Vec<Vec<usize>>
 }
@@ -25,7 +25,7 @@ impl Board {
     })
   }
 
-  fn score(&self, drawn: &HashSet<usize>, last: usize) -> usize {
+  pub fn score(&self, drawn: &HashSet<usize>, last: usize) -> usize {
     let v : usize = self.numbers
       .iter()
       .flat_map(|row| row.iter().filter(|n| !drawn.contains(n)))
@@ -41,18 +41,42 @@ impl Board {
       .map(|item| item.parse::<usize>())
       .collect::<Result<Vec<_>, _>>()?;
 
-    let mut boards : Vec<Board> = vec![];
-
-    // fuck you iterators
-    let lines = rest.lines().filter(|line| !line.trim().is_empty()).collect::<Vec<&str>>();
-    //println!("lines is {:?}", lines);
-
-    for chunk in lines.chunks_exact(5) {
-      let blob = chunk.join("\n");
-      boards.push(blob.parse()?);
-    }
+    let boards : Vec<Board> = rest
+      .trim()
+      .split("\n\n")
+      .map(|blob| blob.parse())
+      .collect::<Result<Vec<_>, _>>()?;
 
     Ok((nums, boards))
+  }
+
+  pub fn calculate_first_winner<'a>(numbers: &[usize], boards: &'a [Board]) -> Option<usize> {
+    let mut drawn  = HashSet::new();
+
+    for i in 0..numbers.len() {
+      drawn.insert(numbers[i]);
+
+      if let Some(won) = boards.iter().find(|b| b.is_won(&drawn)) {
+        return Some(won.score(&drawn, numbers[i]));
+      }
+    };
+    None
+  }
+
+  pub fn calculate_last_winner<'a>(numbers: &[usize], boards: &'a [Board]) -> Option<usize> {
+    let mut boards = boards.to_owned();
+    let mut drawn = HashSet::new();
+
+    for i in 0..numbers.len() {
+      drawn.insert(numbers[i]);
+
+      if boards.len() > 1 {
+        boards.retain(|b| !b.is_won(&drawn));
+      } else if boards[0].is_won(&drawn) {
+          return Some(boards[0].score(&drawn, numbers[i]));
+      }
+    }
+    None
   }
 }
 
@@ -82,51 +106,35 @@ mod tests {
   fn part1_example() {
     let input = SAMPLE;
     let (nums, boards) = Board::load_problem(&input).expect("shit");
+    let score = Board::calculate_first_winner(&nums, &boards);
 
-    for i in (0..nums.len()) {
-      let drawn : HashSet<usize> = nums.iter().take(i).cloned().collect();
-      if let Some(won) = boards.iter().find(|b| b.is_won(&drawn)) {
-        println!("board {:?} won after {:?} draws score = {}", boards, i, won.score(&drawn, nums[i - 1]));
-        break;
-      }
-    }
+    assert_eq!(score, Some(4512));
   }
 
   #[test]
   fn part1_solution() {
     let input = INPUT;
     let (nums, boards) = Board::load_problem(&input).expect("shit");
+    let score = Board::calculate_first_winner(&nums, &boards);
 
-    for i in (0..nums.len()) {
-      let drawn : HashSet<usize> = nums.iter().take(i).cloned().collect();
-      if let Some(won) = boards.iter().find(|b| b.is_won(&drawn)) {
-        println!("board {:?} won after {:?} draws score = {}", boards, i, won.score(&drawn, nums[i - 1]));
-        break;
-      }
-    }
+    assert_eq!(score, Some(89001));
   }
 
   #[test]
   fn part2_example() {
+    let input = SAMPLE;
+    let (nums, boards) = Board::load_problem(&input).expect("shit");
+    let r = Board::calculate_last_winner(&nums, &boards);
 
+    assert_eq!(r, Some(1924));
   }
 
   #[test]
   fn part2_solution() {
     let input = INPUT;
-    let (nums, mut boards) = Board::load_problem(&input).expect("shit");
+    let (nums, boards) = Board::load_problem(&input).expect("shit");
+    let r = Board::calculate_last_winner(&nums, &boards);
 
-    for i in (0..nums.len()) {
-      let drawn : HashSet<usize> = nums.iter().take(i).cloned().collect();
-
-      if boards.len() == 1 {
-        if boards[0].is_won(&drawn) {
-          println!("board {:?} finally won after {:?} draws score = {}", boards[0], i, boards[0].score(&drawn, nums[i - 1]));
-          break;
-        }
-      } else {
-        boards = boards.iter().filter(|b| !b.is_won(&drawn)).cloned().collect();
-      }
-    }
+    assert_eq!(r, Some(7296));
   }
 }
