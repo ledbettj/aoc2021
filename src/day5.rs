@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::error::Error;
@@ -7,10 +8,13 @@ const INPUT : &'static str = include_str!("../inputs/day5.txt");
 const SAMPLE : &'static str = include_str!("../inputs/day5.sample.txt");
 
 fn input(s: &'static str) -> Result<Vec<Line>, Box<dyn Error>> {
-  s.lines().map(|v| v.parse()).collect()
+  s
+    .lines()
+    .map(|v| v.parse())
+    .collect()
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 struct Point {
   x: isize,
   y: isize,
@@ -32,7 +36,7 @@ impl FromStr for Point {
   }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 struct Line {
   p1: Point,
   p2: Point
@@ -63,25 +67,23 @@ impl FromStr for Line {
 
 impl Line {
   pub fn orientation(&self) -> Orientation {
-    if self.p1.x == self.p2.x {
-      Orientation::Vertical
-    } else if self.p1.y == self.p2.y {
-      Orientation::Horizontal
-    } else {
-      Orientation::Diagonal
+    match (self.p1.x.cmp(&self.p2.x), self.p1.y.cmp(&self.p2.y)) {
+      (Ordering::Equal, _) => Orientation::Vertical,
+      (_, Ordering::Equal) => Orientation::Horizontal,
+      (_, _) => Orientation::Diagonal
     }
   }
 
   fn points(&self) -> HashSet<Point> {
-    let step : (isize, isize) = match self.orientation() {
-      Orientation::Vertical if self.p1.y <= self.p2.y => (0, 1),
-      Orientation::Vertical => (0, -1),
-      Orientation::Horizontal if self.p1.x <= self.p2.x => (1, 0),
-      Orientation::Horizontal => (-1, 0),
-      Orientation::Diagonal if self.p1.x <= self.p2.x && self.p1.y <= self.p2.y => (1, 1),
-      Orientation::Diagonal if self.p1.x <= self.p2.x && self.p1.y > self.p2.y => (1, -1),
-      Orientation::Diagonal if self.p1.x > self.p2.x && self.p1.y <= self.p2.y => (-1, 1),
-      Orientation::Diagonal => (-1, -1),
+    let xstep = match self.p1.x.cmp(&self.p2.x) {
+        Ordering::Less    => 1,
+        Ordering::Equal   => 0,
+        Ordering::Greater => -1,
+    };
+    let ystep = match self.p1.y.cmp(&self.p2.y) {
+        Ordering::Less    => 1,
+        Ordering::Equal   => 0,
+        Ordering::Greater => -1,
     };
 
     let mut results = HashSet::new();
@@ -89,8 +91,9 @@ impl Line {
 
     while p != self.p2 {
       results.insert(p);
-      p.x += step.0;
-      p.y += step.1;
+
+      p.x += xstep;
+      p.y += ystep;
     }
     results.insert(self.p2);
     results
@@ -100,7 +103,10 @@ impl Line {
   fn intersection_count(lines: &[Line]) -> usize {
     let mut results : HashSet<Point> = HashSet::new();
 
-    let sets = lines.iter().map(|line| line.points()).collect::<Vec<HashSet<Point>>>();
+    let sets = lines
+      .iter()
+      .map(|line| line.points())
+      .collect::<Vec<HashSet<Point>>>();
 
     for i in 0..(sets.len() - 1) {
       for j in (i + 1)..sets.len() {
