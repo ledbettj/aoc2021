@@ -75,16 +75,8 @@ impl Line {
   }
 
   fn points(&self) -> HashSet<Point> {
-    let xstep = match self.p1.x.cmp(&self.p2.x) {
-        Ordering::Less    => 1,
-        Ordering::Equal   => 0,
-        Ordering::Greater => -1,
-    };
-    let ystep = match self.p1.y.cmp(&self.p2.y) {
-        Ordering::Less    => 1,
-        Ordering::Equal   => 0,
-        Ordering::Greater => -1,
-    };
+    let xstep = (self.p2.x - self.p1.x).signum();
+    let ystep = (self.p2.y - self.p1.y).signum();
 
     let mut results = HashSet::new();
     let mut p = self.p1;
