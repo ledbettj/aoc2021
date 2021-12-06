@@ -8,3 +8,5 @@ mod day3;
 mod day4;
 #[allow(dead_code)]
 mod day5;
+#[allow(dead_code)]
+mod day6;
