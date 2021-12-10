@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate lazy_static;
 #[allow(dead_code)]
 mod day1;
 #[allow(dead_code)]
