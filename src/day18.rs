@@ -192,7 +192,13 @@ mod tests {
     s.explode(0);
     assert_eq!(s, "[[3,[2,[8,0]]],[9,[5,[7,0]]]]".parse().unwrap());
   }
-
+  #[test]
+  fn jake() {
+    let l : Snailfish = "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]".parse().unwrap();
+    let r : Snailfish = "[[[5,[2,8]],4],[5,[[9,9],0]]]".parse().unwrap();
+    let x : Snailfish = "[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]".parse().unwrap();
+    println!("{}", l.add(r).add(x));
+  }
   #[test]
   fn part1_example() {
     let input = "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]

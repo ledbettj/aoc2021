@@ -42,3 +42,5 @@ mod day18;
 mod day20;
 #[allow(dead_code)]
 mod day21;
+#[allow(dead_code)]
+mod day22;
