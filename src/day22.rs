@@ -16,7 +16,7 @@ struct Cube {
 type IRange = RangeInclusive<isize>;
 
 impl Cube {
-  fn square(min: isize, max: isize) -> Self {
+  fn cube(min: isize, max: isize) -> Self {
     Self { x: (min, max), y: (min, max), z: (min, max) }
   }
 
@@ -42,10 +42,6 @@ impl Cube {
       z: ((region.z.0.max(self.z.0), region.z.1.min(self.z.1))),
     });
 
-    if !results.last().unwrap().is_empty() {
-      // println!("top core {:?}", results.last().unwrap());
-    }
-
     // bottom core piece
     results.push(Cube {
       x: ((region.x.0.max(self.x.0), region.x.1.min(self.x.1))),
@@ -53,20 +49,12 @@ impl Cube {
       z: ((region.z.0.max(self.z.0), region.z.1.min(self.z.1))),
     });
 
-    if !results.last().unwrap().is_empty() {
-      // println!("bot core {:?}", results.last().unwrap());
-    }
-
     // left hand piece
     results.push(Cube {
       x: (self.x.0, region.x.0 - 1),
       y: self.y,
       z: self.z
     });
-    if !results.last().unwrap().is_empty() {
-      // println!("lh {:?}", results.last().unwrap());
-    }
-
 
     // right hand piece
     results.push(Cube {
@@ -75,10 +63,6 @@ impl Cube {
       z: self.z
     });
 
-    if !results.last().unwrap().is_empty() {
-      // println!("rh {:?}", results.last().unwrap());
-    }
-
     // front piece
     results.push(Cube {
       x: ((region.x.0.max(self.x.0), region.x.1.min(self.x.1))),
@@ -86,21 +70,12 @@ impl Cube {
       z: (self.z.0, region.z.0 - 1)
     });
 
-    if !results.last().unwrap().is_empty() {
-      // println!("front {:?}", results.last().unwrap());
-    }
-
     // back piece
     results.push(Cube {
       x: ((region.x.0.max(self.x.0), region.x.1.min(self.x.1))),
       y: self.y,
       z: (region.z.1 + 1, self.z.1)
     });
-
-    if !results.last().unwrap().is_empty() {
-      // println!("back {:?}", results.last().unwrap());
-    }
-
 
     results.retain(|cube| !cube.is_empty());
     results
@@ -196,77 +171,12 @@ impl Reactor {
       } else {
         self.turn_off(&instr.cube);
       }
-      print!("{}/{} compacting ", i + 1, self.instructions.len());
-      while self.compact() {
-        print!(".");
-      }
-      println!("done");
     }
-  }
-
-  pub fn compact(&mut self) -> bool {
-    self.compact_defrag()
-  }
-
-  fn compact_defrag(&mut self) -> bool {
-    let mut clipz: Vec<(Cube, Cube)> = vec![];
-    let mut touched = HashSet::new();
-
-    let cubes = self.cubes.iter().cloned().collect::<Vec<Cube>>();
-
-    for i in 0..(cubes.len() - 1) {
-      for j in (i + 1)..cubes.len() {
-        let c1 = cubes[i];
-        let c2 = cubes[j];
-
-        if touched.contains(&c1) || touched.contains(&c2) {
-          continue;
-        }
-
-        if c1.intersects(&c2) {
-          clipz.push((c1, c2));
-          touched.insert(c1);
-          touched.insert(c2);
-        }
-      }
-    }
-
-    let done = !clipz.is_empty();
-
-    for (c1, c2) in clipz.into_iter() {
-      self.cubes.remove(&c2);
-      for c in c2.turn_off_region(&c1) {
-        self.cubes.insert(c);
-      }
-    }
-
-    done
-  }
-
-  fn compact_remove(&mut self) -> bool {
-    let mut to_remove = HashSet::new();
-
-    for c1 in self.cubes.iter() {
-      for c2 in self.cubes.iter() {
-        if c1 == c2 {
-          continue;
-        }
-
-        if c1.contains(c2) {
-          to_remove.insert(*c2);
-        }
-      }
-    }
-
-    for c in &to_remove {
-      self.cubes.remove(&c);
-    }
-
-    to_remove.is_empty()
   }
 
   pub fn turn_on(&mut self, cube: &Cube) {
     // println!("turn on {:?}", cube);
+    self.turn_off(cube);
     self.cubes.insert(*cube);
   }
 
@@ -279,7 +189,7 @@ impl Reactor {
   }
 
   fn count(&self) -> usize {
-    self.cubes.iter().fold(0, |accum, cube| accum + cube.volume() as usize)
+    self.cubes.iter().map(|cube| cube.volume() as usize).sum()
   }
 }
 
@@ -290,7 +200,7 @@ mod tests {
   #[test]
   fn part1_example() {
     let mut reactor : Reactor = SAMPLE.parse().expect("shit");
-    reactor.clip(Cube::square(-50, 50));
+    reactor.clip(Cube::cube(-50, 50));
     reactor.initialize();
     assert_eq!(reactor.count(), 39);
   }
@@ -298,7 +208,7 @@ mod tests {
   #[test]
   fn part1_solution() {
     let mut reactor : Reactor = INPUT.parse().expect("shit");
-    reactor.clip(Cube::square(-50, 50));
+    reactor.clip(Cube::cube(-50, 50));
     reactor.initialize();
     assert_eq!(reactor.count(), 546724);
   }
